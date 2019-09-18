@@ -149,10 +149,9 @@ public class Player : NetworkBehaviour
     {
         shooting = true;
         canShoot = false;
-        GameObject newBullet = (GameObject)Instantiate(bullet);
-        newBullet.transform.position = bulletSpawn.transform.position;
+        GameObject newBullet = (GameObject)Instantiate(bullet, bulletSpawn.position, new Quaternion()); 
         newBullet.GetComponent<Bullet>().Direction = direction;
-        NetworkServer.Spawn(newBullet);
+        NetworkServer.SpawnWithClientAuthority(newBullet, gameObject);
         direction.x = 0;
         direction.z = 0;
         gunMesh.material = cooldownMaterial;

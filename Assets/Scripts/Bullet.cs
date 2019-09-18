@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Networking;
 
-public class Bullet : MonoBehaviour
+public class Bullet : NetworkBehaviour
 {
 
     [SerializeField] private float bulletSpeed;
@@ -13,7 +13,10 @@ public class Bullet : MonoBehaviour
 
     void Update()
     {
-        transform.Translate(direction * bulletSpeed * Time.deltaTime);
+        if (isServer)
+        {
+            transform.position += direction * bulletSpeed * Time.deltaTime;
+        }
     }
 
     void OnTriggerEnter(Collider other)
@@ -23,7 +26,7 @@ public class Bullet : MonoBehaviour
             other.GetComponent<Player>().Cmd_Die();
             Destroy(gameObject);
         }
-        else
+        else if (other.transform.tag == "Level")
         {
             Destroy(gameObject);
         }
