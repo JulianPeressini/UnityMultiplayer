@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Networking;
+using UnityEngine.UI;
 
 public class Player : NetworkBehaviour
 {
@@ -30,7 +31,6 @@ public class Player : NetworkBehaviour
     private float shotCdTime;
     private bool shooting = false;
     private bool canShoot = true;
-
 
     [SerializeField] private Material cooldownMaterial;
     private Material gunMaterial;
@@ -74,7 +74,7 @@ public class Player : NetworkBehaviour
             direction = new Vector3(axisX, 0, axisZ);
         }
         
-        if (Input.GetKeyDown(KeyCode.Keypad4))
+        if (Input.GetKeyDown(KeyCode.K))
         {
             if (!dashing && canDash && !shooting)
             {
@@ -85,16 +85,17 @@ public class Player : NetworkBehaviour
             }
         }
 
-        if (Input.GetKeyDown(KeyCode.Keypad6))
+        if (Input.GetKeyDown(KeyCode.L))
         {
             if (!shooting && canShoot && !dashing)
             {
                 if (axisX != 0 || axisZ != 0)
                 {
-                    Cmd_Shoot();
+                    Shoot();
                 }
-            }      
+            }
         }
+
     }
 
     private void Cooldowns()
@@ -123,7 +124,7 @@ public class Player : NetworkBehaviour
         if (Time.time > dashTime && dashing)
         {
             dashing = false;
-            attackArea.enabled = false;
+            Cmd_EndSlash();
             attackAreaVis.SetActive(false);
         }
 
@@ -139,24 +140,41 @@ public class Player : NetworkBehaviour
         canDash = false;
         direction *= dashSpeed;
         swordMesh.material = cooldownMaterial;
-        attackArea.enabled = true;
+        Cmd_Slash();
         attackAreaVis.SetActive(true);
         dashTime = Time.time + dashLockTime;
         dashCdTime = Time.time + dashCooldown;         
     }
 
-    [Command] private void Cmd_Shoot()
+    [Command] private void Cmd_Slash()
+    {
+        attackArea.enabled = true;
+    }
+
+    [Command]
+    private void Cmd_EndSlash()
+    {
+        attackArea.enabled = false;
+    }
+
+
+    private void Shoot()
     {
         shooting = true;
         canShoot = false;
-        GameObject newBullet = (GameObject)Instantiate(bullet, bulletSpawn.position, new Quaternion()); 
-        newBullet.GetComponent<Bullet>().Direction = direction;
-        NetworkServer.SpawnWithClientAuthority(newBullet, gameObject);
+        Cmd_SpawnBullet(direction);
         direction.x = 0;
         direction.z = 0;
         gunMesh.material = cooldownMaterial;
         shotTime = Time.time + shotLockTime;
-        shotCdTime = Time.time + shotCooldown;    
+        shotCdTime = Time.time + shotCooldown;
+    }
+
+    [Command] private void Cmd_SpawnBullet(Vector3 bulletDir)
+    {
+        GameObject newBullet = Instantiate(bullet, bulletSpawn.position, new Quaternion()); 
+        newBullet.GetComponent<Bullet>().Direction = bulletDir;
+        NetworkServer.SpawnWithClientAuthority(newBullet, gameObject);
     }
 
     [Command] public void Cmd_Die()
